@@ -89,7 +89,7 @@ def computeTrajectories(numTimeSteps,numParticles,particles,computePos,computeVe
         for j in np.linspace(0,numParticles-1,numParticles,dtype='int'): 
             particles[j,i,0],particles[j,i,1],particles[j,i,2],particles[j,i,3],particles[j,i,4],particles[j,i,5] = updateState(i,d,w,dt,phi[j]) # Compute trajectory
 
-'''@jit(nopython = True)
+@jit(nopython = True)
 def computeDelayedTime(particle,x,y,z,timeStep,dt,c): # Compute delayed time for jth particle at nth time step
     R = np.array((x,y,z)) # Field point
     diff = np.zeros(3) # Separation vector
@@ -99,7 +99,7 @@ def computeDelayedTime(particle,x,y,z,timeStep,dt,c): # Compute delayed time for
     # then we know we have passed the relevant delayed time point. This decreases computation time for simulations with large Nt
     # since we must loop through a much smaller subset of time values.
     tridx = 0 # Index of delayed time
-    if timeStep - 1 > 1:
+    if timeStep > 2:
         diff = R - np.array((particle[timeStep,0],particle[timeStep,1],0))
         preverror = abs(np.sqrt(np.dot(diff,diff)) - c*(t-(timeStep)*dt))
         for i in np.linspace(timeStep-1,0,timeStep-1).astype('int'):
@@ -112,22 +112,23 @@ def computeDelayedTime(particle,x,y,z,timeStep,dt,c): # Compute delayed time for
                 preverror = error
     else:
         pass
-    return tridx'''
+    return tridx
 
+'''
 @jit(nopython = True)
 def computeDelayedTime(particle,x,y,z,timeStep,dt,c): #Compute delayed time for jth particle at nth time step
     R = np.array((x,y,z)) # Field point
     diff = np.zeros(3) # Separation vector
     t = timeStep*dt # Current time 
 
-    if timeStep < 2:
-        return 0
-    else:
-        error = np.zeros((timeStep))
-        for i in np.linspace(timeStep,0,timeStep).astype('int'):
-            diff = R - np.array((particle[i,0],particle[i,1],0))
-            error[i] = abs(np.sqrt(np.dot(diff,diff)) - c*(t-i*dt))
-    return np.where(error==min(error))[0][0]
+    error = np.zeros((timeStep))
+    for i in np.linspace(timeStep,0,timeStep).astype('int'):
+        diff = R - np.array((particle[i,0],particle[i,1],0))
+        error[i] = abs(np.sqrt(np.dot(diff,diff)) - c*(t - i*dt))
+    try:
+        return np.where(error==min(error))[0][0]
+    except:
+        return 0'''
 
 @jit(nopython = True)
 def computeAllDelayedTime(particles,numParticles,numGridPoints,timeStep,dt,gridx,gridy,gridz,tr,c): # Compute delayed times for all particles at all time steps
