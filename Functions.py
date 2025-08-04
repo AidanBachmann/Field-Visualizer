@@ -59,7 +59,7 @@ def init(_computePos=computePosDefault, # Equations of motion
     grid = np.zeros((numGridPoints,numGridPoints,numGridPoints,9,numTimeSteps)) # Initialize arrays to store all field information
     
     x = np.linspace(-(numGridPoints-1)/2,(numGridPoints-1)/2,numGridPoints,dtype='int')*gridSpacing # Initialize grid array
-    gridx,gridy,gridz = np.meshgrid(x,x,x) #G enerate meshgrid
+    gridx,gridy,gridz = np.meshgrid(x,x,x) # Generate meshgrid
     
     roll(gridx,3,int((numGridPoints-1)/2)) # Roll each meshgrid so each is centered around the origin
     roll(gridy,3,int((numGridPoints-1)/2))
@@ -114,15 +114,15 @@ def computeDelayedTime(particle,x,y,z,timeStep,dt,c): # Compute delayed time for
         pass
     return tridx
 
-'''
-@jit(nopython = True)
+
+'''@jit(nopython = True)
 def computeDelayedTime(particle,x,y,z,timeStep,dt,c): #Compute delayed time for jth particle at nth time step
     R = np.array((x,y,z)) # Field point
     diff = np.zeros(3) # Separation vector
     t = timeStep*dt # Current time 
 
     error = np.zeros((timeStep))
-    for i in np.linspace(timeStep,0,timeStep).astype('int'):
+    for i in np.linspace(timeStep-1,0,timeStep).astype('int'):
         diff = R - np.array((particle[i,0],particle[i,1],0))
         error[i] = abs(np.sqrt(np.dot(diff,diff)) - c*(t - i*dt))
     try:
@@ -144,16 +144,15 @@ def computeAllDelayedTime(particles,numParticles,numGridPoints,timeStep,dt,gridx
 @jit(nopython = True)
 def computeParticleField(particle,x,y,z,tr,c,eCharge,Q,e0,u0): #Compute field from nth particle at some field point at jth time step
     R = np.array((x-particle[tr,0],y-particle[tr,1],z))
-    if (R@R==0):
+    if (np.dot(R,R) == 0.0):
         return np.zeros(9)
-    Rhat = R/np.sqrt(R@R) # np.dot(R,R)
-    RMagnitude = np.sqrt(R@R)
+    Rhat = R/np.sqrt(np.dot(R,R))
+    RMagnitude = np.sqrt(np.dot(R,R))
     v = np.array((particle[tr,2],particle[tr,3],0))
     a = np.array((particle[tr,4],particle[tr,5],0))
-
     u = c*Rhat - v
 
-    E = (Q*eCharge/(4*np.pi*e0))*(RMagnitude/((np.dot(R,u))**3))*( (c**2 - np.dot(v,v))*u + np.cross(R,np.cross(u,a)) )
+    E = (Q*eCharge/(4*np.pi*e0))*(RMagnitude/(pow(np.dot(R,u),3)))*((pow(c,2) - np.dot(v,v))*u + np.cross(R,np.cross(u,a)) )
     B = (1/c)*np.cross(Rhat,E)
     S = (1/u0)*np.cross(E,B)
     fields = np.array((E[0],E[1],E[2],B[0],B[1],B[2],S[0],S[1],S[2]))
@@ -161,6 +160,9 @@ def computeParticleField(particle,x,y,z,tr,c,eCharge,Q,e0,u0): #Compute field fr
 
 @jit(nopython = True)
 def computeAllParticleFields(particles,chargeSign,numParticles,grid,numGridPoints,timeStep,dt,gridx,gridy,gridz,tr,c,eCharge,e0,u0): #Compute all particle contributions to all field points for jth time step
+    # Formatting: 
+    # particles = (numParticles,numTimeSteps,6) --> Stores x,y,vx,vy,ax,ay
+    # grid = (numGridPoints,numGridPoints,numGridPoints,9,numTimeSteps) --> Stores Ex,Ey,Ez,Bx,By,Bz,Sx,Sy,Sz for every grid point at every time step
     tr = computeAllDelayedTime(particles,numParticles,numGridPoints,timeStep,dt,gridx,gridy,gridz,tr,c)
     #for i in tqdm(np.linspace(0,numGridPoints-1,numGridPoints,dtype='int'),total=numGridPoints): # Uncomment this line to get a progress bar, not compatible with jit
     for i in np.linspace(0,numGridPoints-1,numGridPoints).astype('int'):
@@ -201,11 +203,11 @@ def plotParticleTrajectory(particles,numTimeSteps,numParticles,saveFig):
     os.chdir('../')
     plt.clf()
         
-def plot2DE(particles,numParticles,numTimeSteps,grid,gridx,gridy,saveFig): # Plot 2D Electric field
+def plot2DE(particles,numParticles,numTimeSteps,numGridPoints,grid,gridx,gridy,saveFig): # Plot 2D Electric field
     colors = plt.cm.hsv(np.linspace(0,1,numParticles)) # Create unique color for each particle
     plt.figure(1)
     for i in np.linspace(0,numTimeSteps-1,numTimeSteps,dtype='int'):
-        plt.quiver(gridx[:,:,0],gridy[:,:,0],grid[:,:,0,0,i],grid[:,:,0,1,i])
+        plt.quiver(gridx[:,:,int((numGridPoints-1)/2)],gridy[:,:,int((numGridPoints-1)/2)],grid[:,:,0,0,i],grid[:,:,0,1,i])
         for j in np.linspace(0,numParticles-1,numParticles,dtype='int'):
             plotParticlePos(particles[j,:,:],i,j,colors[j])
         if saveFig:
@@ -214,11 +216,11 @@ def plot2DE(particles,numParticles,numTimeSteps,grid,gridx,gridy,saveFig): # Plo
             plt.show()
         plt.cla() # Clear axes
 
-def plot2DB(particles,numParticles,numTimeSteps,grid,gridx,gridy,saveFig): # Plot 2D Magnetic field
+def plot2DB(particles,numParticles,numTimeSteps,numGridPoints,grid,gridx,gridy,saveFig): # Plot 2D Magnetic field
     colors = plt.cm.hsv(np.linspace(0,1,numParticles)) # Create unique color for each particle
     plt.figure(2)
     for i in np.linspace(0,numTimeSteps-1,numTimeSteps,dtype='int'):
-        plt.quiver(gridx[:,:,0],gridy[:,:,0],grid[:,:,0,3,i],grid[:,:,0,4,i])
+        plt.quiver(gridx[:,:,int((numGridPoints-1)/2)],gridy[:,:,int((numGridPoints-1)/2)],grid[:,:,0,3,i],grid[:,:,0,4,i])
         for j in np.linspace(0,numParticles-1,numParticles,dtype='int'):
             plotParticlePos(particles[j,:,:],i,j,colors[j])
         if saveFig:
@@ -227,14 +229,16 @@ def plot2DB(particles,numParticles,numTimeSteps,grid,gridx,gridy,saveFig): # Plo
             plt.show()
         plt.cla() # Clear axes
 
-def plot2D(particles,numParticles,numTimeSteps,grid,gridx,gridy,saveFig,makeGifs,clearFigures):
+def plot2D(particles,numParticles,numTimeSteps,numGridPoints,grid,gridx,gridy,saveFig,makeGifs,clearFigures):
     colors = plt.cm.hsv(np.linspace(0,1,numParticles)) # Create unique color for each particle
     fig,ax = plt.subplots(1,2,figsize=(20,11))
+    #xyPlaneIdx = int((numGridPoints-1)/2) # Index for where z = 0 (want to plot fields in the plane of motion)
+    xyPlaneIdx = -1 # z slice to plot fields
     for i in np.linspace(0,numTimeSteps-1,numTimeSteps,dtype='int'):
         ax[0].set_title('Electric Field')
         ax[1].set_title('Magnetic Field')
-        ax[0].quiver(gridx[:,:,0],gridy[:,:,0],grid[:,:,0,0,i],grid[:,:,0,1,i])
-        ax[1].quiver(gridx[:,:,0],gridy[:,:,0],grid[:,:,0,3,i],grid[:,:,0,4,i])
+        ax[0].quiver(gridx[:,:,xyPlaneIdx],gridy[:,:,xyPlaneIdx],grid[:,:,xyPlaneIdx,0,i],grid[:,:,xyPlaneIdx,1,i])
+        ax[1].quiver(gridx[:,:,xyPlaneIdx],gridy[:,:,xyPlaneIdx],grid[:,:,xyPlaneIdx,3,i],grid[:,:,xyPlaneIdx,4,i])
         for j in np.linspace(0,numParticles-1,numParticles,dtype='int'):
             ax[0].scatter(particles[j,i,0],particles[j,i,1],color=colors[j])
             ax[0].text(particles[j,i,0],particles[j,i,1],"P%s T%s" % (j,i))
@@ -253,13 +257,15 @@ def plot2D(particles,numParticles,numTimeSteps,grid,gridx,gridy,saveFig,makeGifs
         cleanAll()
         os.chdir('../')
 
-def plot2DS(particles,numParticles,numTimeSteps,grid,gridx,gridy,saveFig,makeGifs,clearFigures): # Plot 2D Poynting field
+def plot2DS(particles,numParticles,numTimeSteps,numGridPoints,grid,gridx,gridy,saveFig,makeGifs,clearFigures): # Plot 2D Poynting field
     plt.figure(3)
     colors = plt.cm.hsv(np.linspace(0,1,numParticles)) # Create unique color for each particle
-    fieldNorm = np.sqrt(pow(grid[:,:,0,6,:],2) + pow(grid[:,:,0,7,:],2)) # Magnitude of Poynting field
+    #xyPlaneIdx = int((numGridPoints-1)/2) # Index for where z = 0 (want to plot fields in the plane of motion)
+    xyPlaneIdx = -1 # z slice to plot fields
+    fieldNorm = np.sqrt(pow(grid[:,:,xyPlaneIdx,6,:],2) + pow(grid[:,:,xyPlaneIdx,7,:],2)) # Magnitude of Poynting field
     for i in np.linspace(0,numTimeSteps-1,numTimeSteps,dtype='int'):
         plt.title('Magnitude of Poynting Vector')
-        plt.pcolormesh(gridx[:,:,0],gridy[:,:,0],fieldNorm[:,:,i],shading='gouraud')
+        plt.pcolormesh(gridx[:,:,xyPlaneIdx],gridy[:,:,xyPlaneIdx],fieldNorm[:,:,i],shading='gouraud')
         for j in np.linspace(0,numParticles-1,numParticles,dtype='int'):
             plotParticlePos(particles[j,:,:],i,j,colors[j])
         if saveFig:

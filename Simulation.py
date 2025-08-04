@@ -13,7 +13,7 @@ eCharge = 1 # Charge of each particle
 e0 = 1 # Permitivitty of free space, use this to set light speed (effectively change length scale of simulation)
 u0 = 1 # Permiability of free space
 c =  3e8 # Speed of light, 1/np.sqrt(e0*u0)
-gridLen = int(1e6) # Grid length
+gridLen = int(1e2) # Grid length
 numGridPoints = int(21) # Num of grid points to cover grid length
 numParticles = int(8) # Number of particles in simulation
 #dt = min(d*((2*np.pi)/numParticles)/c,2*np.pi/w*0.01) # Define the time step as 1/100 of a period
@@ -21,7 +21,6 @@ numParticles = int(8) # Number of particles in simulation
 dt = 0.0001
 numTimeSteps = 50
 propFrac = c*numTimeSteps*dt/(2*gridLen) # Fraction of grid E propagates over during the simulation
-print(propFrac)
 
 useDeafultEOM = True # Use default equations of motion, define in Functions.py
 plotTrajectories = True # Plot particle trajectories
@@ -74,6 +73,6 @@ print(f'Simulation completed in {end - start} seconds.')
 #if plotTrajectories:
 #    funcs.plotParticleTrajectory(particles,numTimeSteps,numParticles,saveFig)
 if plotFields:
-    funcs.plot2D(particles,numParticles,numTimeSteps,grid,gridx,gridy,saveFig,makeGifs,clearFigures)
+    funcs.plot2D(particles,numParticles,numTimeSteps,numGridPoints,grid,gridx,gridy,saveFig,makeGifs,clearFigures)
 if plotS:
-    funcs.plot2DS(particles,numParticles,numTimeSteps,grid,gridx,gridy,saveFig,makeGifs,clearFigures)
+    funcs.plot2DS(particles,numParticles,numTimeSteps,numGridPoints,grid,gridx,gridy,saveFig,makeGifs,clearFigures)
