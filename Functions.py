@@ -232,7 +232,6 @@ def plot2DB(particles,numParticles,numTimeSteps,numGridPoints,grid,gridx,gridy,s
 def plot2D(particles,numParticles,numTimeSteps,numGridPoints,grid,gridx,gridy,saveFig,makeGifs,clearFigures):
     colors = plt.cm.hsv(np.linspace(0,1,numParticles)) # Create unique color for each particle
     fig,ax = plt.subplots(1,2,figsize=(20,11))
-    #xyPlaneIdx = int((numGridPoints-1)/2) # Index for where z = 0 (want to plot fields in the plane of motion)
     xyPlaneIdx = -1 # z slice to plot fields
     for i in np.linspace(0,numTimeSteps-1,numTimeSteps,dtype='int'):
         ax[0].set_title('Electric Field')
@@ -254,6 +253,35 @@ def plot2D(particles,numParticles,numTimeSteps,numGridPoints,grid,gridx,gridy,sa
         makeGif(numTimeSteps,'Fields') # Make gif
     if clearFigures:
         os.chdir('z_Fields/')
+        cleanAll()
+        os.chdir('../')
+
+def plot2DFieldNorms(particles,numParticles,numTimeSteps,numGridPoints,grid,gridx,gridy,saveFig,makeGifs,clearFigures):
+    colors = plt.cm.hsv(np.linspace(0,1,numParticles)) # Create unique color for each particle
+    fig,ax = plt.subplots(1,2,figsize=(20,11))
+    xyPlaneIdx = -1 # z slice to plot fields
+    Enorm = np.sqrt(pow(grid[:,:,xyPlaneIdx,0,:],2) + pow(grid[:,:,xyPlaneIdx,1,:],2) + pow(grid[:,:,xyPlaneIdx,2,:],2))
+    Bnorm = np.sqrt(pow(grid[:,:,xyPlaneIdx,3,:],2) + pow(grid[:,:,xyPlaneIdx,4,:],2) + pow(grid[:,:,xyPlaneIdx,5,:],2))
+    for i in np.linspace(0,numTimeSteps-1,numTimeSteps,dtype='int'):
+        ax[0].set_title('Electric Field')
+        ax[1].set_title('Magnetic Field')
+        ax[0].pcolormesh(gridx[:,:,xyPlaneIdx],gridy[:,:,xyPlaneIdx],Enorm[:,:,i],shading='gouraud')
+        ax[1].pcolormesh(gridx[:,:,xyPlaneIdx],gridy[:,:,xyPlaneIdx],Bnorm[:,:,i],shading='gouraud')
+        for j in np.linspace(0,numParticles-1,numParticles,dtype='int'):
+            ax[0].scatter(particles[j,i,0],particles[j,i,1],color=colors[j])
+            ax[0].text(particles[j,i,0],particles[j,i,1],"P%s T%s" % (j,i))
+            ax[1].scatter(particles[j,i,0],particles[j,i,1],color=colors[j])
+            ax[1].text(particles[j,i,0],particles[j,i,1],"P%s T%s" % (j,i))
+        if saveFig:
+            plt.savefig('z_FieldNorms/FieldNorms_'+'{:05d}'.format(i+1)+'.png') # Save figure
+        else:
+            plt.show()
+        ax[0].cla() # Clear axes
+        ax[1].cla()
+    if makeGifs:
+        makeGif(numTimeSteps,'FieldNorms') # Make gif
+    if clearFigures:
+        os.chdir('z_FieldNorms/')
         cleanAll()
         os.chdir('../')
 
