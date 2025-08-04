@@ -240,8 +240,8 @@ def plot2DFieldNorms(particles,numParticles,numTimeSteps,numGridPoints,grid,grid
     Enorm = np.sqrt(pow(grid[:,:,zsliceIdx,0,:],2) + pow(grid[:,:,zsliceIdx,1,:],2) + pow(grid[:,:,zsliceIdx,2,:],2))
     Bnorm = np.sqrt(pow(grid[:,:,zsliceIdx,3,:],2) + pow(grid[:,:,zsliceIdx,4,:],2) + pow(grid[:,:,zsliceIdx,5,:],2))
     for i in np.linspace(0,numTimeSteps-1,numTimeSteps,dtype='int'):
-        ax[0].set_title(f'Electric Field at z = {gridx[0,0,zsliceIdx]}')
-        ax[1].set_title(f'Magnetic Field at z = {gridx[0,0,zsliceIdx]}')
+        ax[0].set_title(f'Electric Field Magnitude at z = {gridx[0,0,zsliceIdx]}')
+        ax[1].set_title(f'Magnetic Field Magnitude at z = {gridx[0,0,zsliceIdx]}')
         ax[0].pcolormesh(gridx[:,:,zsliceIdx],gridy[:,:,zsliceIdx],Enorm[:,:,i],shading='gouraud')
         ax[1].pcolormesh(gridx[:,:,zsliceIdx],gridy[:,:,zsliceIdx],Bnorm[:,:,i],shading='gouraud')
         for j in np.linspace(0,numParticles-1,numParticles,dtype='int'):
